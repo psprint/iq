@@ -1,0 +1,59 @@
+#!/usr/bin/env zsh
+# -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+
+# Copyright (c) 2022 Sebastian Gniazdowski
+
+# Bootstrap complete exec environment.
+builtin emulate -L zsh
+0=${${0:#$ZSH_ARGZERO}:-${(%):-%N}}
+0=${${(M)0##/*}:-$PWD/${0#./}}
+
+local -A Options
+local -a opt_help opt_e opt_c opt_v
+integer verbose exit_code
+iniq-items-parse-opts() {
+    reply=()
+    builtin zparseopts -D -E -A Options -- \
+            -edit=opt_e e=opt_e \
+            -cat=opt_c c=opt_c \
+            -verbose=opt_v v=opt_v \
+            -help=opt_help h=opt_help || return 7
+    reply=("$@")
+}
+
+source $0:h:h/functions/common-init "${opt_e:+edit}${opt_c:+cat}" $0:h:h
+
+iniq-items-usage() {
+    msg
+}
+
+# Init code, options and usage.
+iniq-items-parse-opts "$@"||return $?
+(($#opt_help)) && {iniq-items-usage; return 0;}
+set -- $reply
+
+# Reduce some options to one flag field.
+(( $+Options[--edit] )) && Options[-e]=
+(( $+Options[--cat] )) && Options[-c]=
+(( $+Options[--verbose] )) && Options[-v]=
+
+# Convert key
+2=${2//\/##/__}
+
+# Edit
+if (( $+Options[-e] )); then
+    repeat 1 {iniq-edit Options $@; exit_code+=$?;}
+fi
+# Cat
+if (( $+Options[-c] )); then
+    repeat 1 {iniq-cat Options $@; exit_code+=$?;}
+fi
+# Warning message
+if ((exit_code)); then
+    msg {208}Warning: %fnon-zero exit code %B{41}$exit_code
+fi
+
+# Between 1…9 means that index has been updated, despite problems.
+return exit_code
+
+# vim:ft=zsh:tw=80:sw=4:sts=4:et:foldmarker=[[[,]]]
