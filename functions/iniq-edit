@@ -32,10 +32,16 @@ if [[ -z $iq_file || -z $iq_key || -z $iq_set_value ]]; then
     return 1
 fi
 
-INI[$iq_key]=$iq_set_value
+if (($+INI[$iq_key])); then
+    INI[$iq_key]=$iq_set_value
+else
+    msg {208}Error:{203} no such key {41}%B${iq_key##*__}{203}%b, cannot edit
+    return 7
+fi
 
 @str-write-toml "$iq_file" INI order
 exval=$?
 ((exval&&exval!=127))&&msg {208}Warning:{204}Found {41}$exval{204} errors \
     while writing %B{39}$iq_file{204}…
+((!exval))&&msg {41}File %B{203}$iq_file:t{41}%b edited correctly
 return exval

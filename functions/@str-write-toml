@@ -3,7 +3,7 @@
 # -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # Copyright (c) 2018 Sebastian Gniazdowski
 #
-# @str-read-toml
+# @str-write-toml
 #
 # Reads a TOML file with support for single-level array.
 #
@@ -28,55 +28,45 @@
 # array=( "${(@Q)${(@z)TOML[<sec>_array]}}" )
 #
 
-@str-read-toml() {
-    local __toml_file="$1" __out_hash="${2:-TOML}" __key_prefix="$3"
-    local IFS='' __line __cur_section="void" __access_string REPLY
-    local -a match mbegin mend
+@str-write-toml() {
+    local __file="$1" __hash=${2:-INI} __order=${3:-order}
+    local __item __cur_section="void" __access_string REPLY
+    local -a match mbegin mend __inorder
     integer retval
 
-    reply=()
+    inorder=( "${(@P)__order}" )
     # Don't leak any helper functions
-    typeset -g tomlef
-    tomlef=( ${(k)functions} )
-    trap "unset -f -- \"\${(k)functions[@]:|tomlef}\" &>/dev/null; unset tomlef" EXIT
-    trap "unset -f -- \"\${(k)functions[@]:|tomlef}\" &>/dev/null; unset tomlef; return 1" INT
+    typeset -g tomatentry
+    tomatentry=( ${(k)functions} )
+    trap "unset -f -- \"\${(k)functions[@]:|tomatentry}\" &>/dev/null; unset tomatentry" EXIT
+    trap "unset -f -- \"\${(k)functions[@]:|tomatentry}\" &>/dev/null; unset tomatentry; return 1" INT
 
-    .str-toml-parse-array() {
-        local -A Strings
-        @str-parse-json "{\"input\":$1}" input Strings
-        if [[ -n "${Strings[2/1]}" ]]; then
-            REPLY="${Strings[2/1]# }"
-            return 0
-        else
-            REPLY=""
-            return 1
-        fi
-    }
+    [[ -e "$__file" ]]&&((!1))&&msg {208}Warning: {203}@str-write-toml: \
+        {174}toml file {41}%B$__file{203}%b already exists
 
-    [[ ! -r "$__toml_file" ]] && { builtin msg: {203}@str-read-toml: \
-        {174}toml file is unreadable \($__toml_file\); return 1; }
-    (( ${(P)+__out_hash} )) || typeset -gA "$__out_hash"
+    __file=$__file.out
+    : > $__file
 
-    while read -r -t 1 __line; do
-        if [[ "$__line" = [[:blank:]]#\;* ]]; then
-            continue
-        elif [[ "$__line" = (#b)[[:blank:]]#\[([^\]]##)\][[:blank:]]# ]]; then
-            __cur_section="${match[1]}"
-        elif [[ "$__line" = (#b)[[:blank:]]#([^[:blank:]=]##)[[:blank:]]#[=][[:blank:]]#(*) ]]; then
-            match[2]="${match[2]%"${match[2]##*[! $'\t']}"}" # remove trailing whitespace
-            .str-toml-parse-array "${match[2]}" && \
-                match[2]="$REPLY"
-            __access_string="${__out_hash}[${__key_prefix}${__cur_section}__${match[1]}]"
-            : "${(P)__access_string::=${match[2]}}"
-            reply+=(  ${__key_prefix}${__cur_section}__$match[1] )
-        else
-            if [[ -n $__line ]]; then
-                msg {203}Error:{174} Incorrect line in input: %f$__line
-                retval+=1
+    local q
+    for __item in $inorder; do
+        if [[ $__item == (#b)(*)-([[:space:]]#\#*) ]]; then
+            if [[ $q != $match[1] ]]; then
+                q=$match[1]
+                print "[$q]" >> $__file
             fi
+            print $match[2] >> $__file
+            continue
         fi
-    done < "$__toml_file"
+        if [[ $q != ${__item%%__*} ]]; then
+            q=${__item%%__*}
+            print "[$q]" >> $__file
+        fi
+        __access_string="${__hash}[${__item}]"
+        print ${__item##*__}=${(P)__access_string} >> $__file
+    done
 
+    command ln -f $__file ${__file%.out}
+    command rm -f $__file
     return retval
 }
 

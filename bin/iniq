@@ -30,7 +30,7 @@ iniq-items-usage() {
 # Init code, options and usage.
 iniq-items-parse-opts "$@"||return $?
 (($#opt_help)) && {iniq-items-usage; return 0;}
-set -- $reply
+set -- "$reply[@]"
 
 # Reduce some options to one flag field.
 (( $+Options[--edit] )) && Options[-e]=
