@@ -1,0 +1,26 @@
+#!/usr/bin/env zsh
+# -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+
+# Copyright (c) 2022 Sebastian Gniazdowski
+
+# Bootstrap complete exec environment.
+builtin emulate -L zsh -o extendedglob
+0=$Plugins[IQ_DIR]/iniq-edit
+
+local var_name=$1 q
+shift
+local -a iq_files=($@)
+local -A Opts=( "${(kv@)${(Pkv@)var_name}}" ) INI
+integer exval
+
+for q ($iq_files); do
+    if [[ ! -f $q ]]; then
+        msg {208}INI file %B{39}$q{208}%b doesn\'t exist, exiting…
+        exval+=7
+        continue
+    fi
+    iq-display $q
+    exval+=$?
+done
+
+return exval

@@ -58,7 +58,7 @@
     (( ${(P)+__out_hash} )) || typeset -gA "$__out_hash"
 
     while read -r -t 1 __line; do
-e        if [[ "$__line" = [[:space:]]#\;* ]]; then
+        if [[ "$__line" = [[:space:]]#\;* ]]; then
             continue
         elif [[ "$__line" = (#b)[[:blank:]]#\[([^\]]##)\][[:blank:]]# ]]; then
             __cur_section="${match[1]}"
