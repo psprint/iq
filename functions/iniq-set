@@ -7,7 +7,7 @@
 builtin emulate -L zsh -o extendedglob
 0=$Plugins[IQ_DIR]/iniq-edit
 
-local var_name=$1 iq_file=$2 iq_key=$3 iq_value iq_set_value=$4 sect=${3%%__*}
+local var_name=$1 iq_file=$2 iq_key=$3 iq_value iq_set_value=$4 sect=${3%%/*}
 local -A Opts=( "${(kv@)${(Pkv@)var_name}}" ) INI
 integer exval iq_existed
 if [[ ! -f $iq_file ]]; then
@@ -32,17 +32,33 @@ if [[ -z $iq_file || -z $iq_key || -z $iq_set_value ]]; then
         and the value to set, exiting…
     return 1
 fi
-
+iq_key=${iq_key//\//__}
 (($+INI[$iq_key]))&&{iq_value=$INI[$iq_key];iq_existed=1;}
 INI[$iq_key]=$iq_set_value
 if ((!iq_existed)); then
-    integer i=${order[(i)$sect__*]}
+    if (($+Options[-b]+$+Options[--bottom] )); then
+        integer i=${order[(I)${sect}__*]}+1
+    else
+        integer i=${order[(i)${sect}__*]}
+    fi
     order=("${(@)order[1,i-1]}" $iq_key "${(@)order[i,-1]}")
 fi
-printf %s\\n $order
+#printf %s\\n $order
 @str-write-toml "$iq_file" INI order
 exval=$?
 ((exval&&exval!=127))&&msg {208}Warning:{204}Found {41}$exval{204} errors \
     while writing %B{39}$iq_file{204}…
-((!exval))&&msg {41}File %B{203}$iq_file:t{41}%b edited correctly
+if ((!iq_existed)); then
+    if ((!exval)); then
+        msg {41}File %B{203}$iq_file:t{41}%b edited correctly, a new key has \
+            been added: in section %B{39}\[$sect\]{41} → %B{208}${iq_key##*__}{33}={208}$iq_set_value%b{41}.
+    fi
+else
+    if ((!exval)); then
+        msg {41}File %B{203}$iq_file:t{41}%b edited correctly, existing key \
+            %B{203}${iq_key##*__}%b{41} in section %B{39}\[$sect\]{41} \
+            set to → %B{208}${iq_key##*__}{33}={208}$iq_set_value%b{41}.
+
+    fi
+fi
 return exval

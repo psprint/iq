@@ -32,6 +32,7 @@ if [[ -z $iq_file || -z $iq_key || -z $iq_set_value ]]; then
     return 1
 fi
 
+iq_key=${iq_key//\//__}
 if (($+INI[$iq_key])); then
     INI[$iq_key]=$iq_set_value
 else

@@ -9,7 +9,7 @@ builtin emulate -L zsh
 0=${${(M)0##/*}:-$PWD/${0#./}}
 
 local -A Options
-local -a opt_help opt_e opt_c opt_v
+local -a opt_help opt_e opt_c opt_v opt_s args
 integer verbose exit_code
 iniq-parse-opts() {
     reply=()
@@ -17,21 +17,25 @@ iniq-parse-opts() {
             -edit=opt_e e=opt_e \
             -cat=opt_c c=opt_c \
             -set=opt_c s=opt_s \
+            -bottom b \
             -verbose=opt_v v=opt_v \
             -help=opt_help h=opt_help || return 7
     reply=("$@")
 }
 
-source $0:h:h/functions/common-init "${opt_e:+edit}${opt_c:+cat}" $0:h:h
+[[ -f $0:h:h/Makefile ]] && \
+    source $0:h:h/functions/common-init "${opt_e:+edit}${opt_c:+cat}" $0:h:h
+[[ -f $0:h:h/share/iq/common-init ]] && \
+    source $0:h:h/share/iq/common-init "${opt_e:+edit}${opt_c:+cat}" $0:h:h
 
 iniq-usage() {
-    msg
+    noglob msg {41}iq {39}-[ecbvh] {208}\<INI-file-path\> …
 }
 
 # Init code, options and usage.
 iniq-parse-opts "$@"||return $?
 (($#opt_help)) && {iniq-usage; return 0;}
-set -- "$reply[@]"
+args=( "$reply[@]" )
 
 # Reduce some options to one flag field.
 (($+Options[--edit]))&&Options[-e]=
@@ -41,14 +45,19 @@ set -- "$reply[@]"
 
 # Set
 if (( $+Options[-s] )); then
-    repeat 1 {iniq-set Options $@; exit_code+=$?;}
-    print q
+    for q in "${(@)args[2,-1]}"; do
+        # Convert key and value
+        set -- $args[1] ${q%%=*} ${q##*=}
+        repeat 1 {iniq-set Options $@; exit_code+=$?;}
+    done
 fi
 # Edit
 if (( $+Options[-e] )); then
-    # Convert key
-    2=${2//\/##/__}
-    repeat 1 {iniq-edit Options $@; exit_code+=$?;}
+    for q in "${(@)args[2,-1]}"; do
+        # Convert key and value
+        set -- $args[1] ${q%%=*} ${q##*=}
+        repeat 1 {iniq-edit Options $@; exit_code+=$?;}
+    done
 fi
 # Cat
 if (( $+Options[-c] )); then
