@@ -52,13 +52,14 @@ args=("$reply[@]")
 (($+Options[--verbose]))&&Options[-v]=
 (($+Options[--bottom]))&&Options[-b]=
 # Print usage if requested.
-(($+Opions[-h]))&&{iniq-usage; return 0;}
+(($+Options[-h]))&&{iniq-usage; return 0;}
 
 #
 # execute requested operation
 #
 # Edit
 if (($+Options[-E]||$+Options[-I])); then
+    cnt+=1
     for q in "${(@)args[2,-1]}"; do
         ((k))&&{k=0;continue}
         if [[ $q != *=* ]]; then
@@ -69,7 +70,7 @@ if (($+Options[-E]||$+Options[-I])); then
         fi
         set -- "$args[1]" "${q%%=*}" "${q##*=}"
         (($+Options[-E]))&&repeat 1 {iniq-edit Options $@; exit_code+=$?;}
-        (($+Options[-I]))&&repeat 1 {iniq-insert Options $@; exit_code+=$?;}
+        (($+Options[-I]))&&repeat 1 {iniq-add Options $@; exit_code+=$?;}
     done
 fi
 
