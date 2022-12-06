@@ -15,7 +15,7 @@ integer exval
 
 for q ($iq_files); do
     if [[ ! -f $q ]]; then
-        msg {208}INI file %B{39}$q{208}%b doesn\'t exist, exiting…
+        iqmsg {208}INI file %B{39}$q{208}%b doesn\'t exist, exiting…
         exval+=7
         continue
     fi

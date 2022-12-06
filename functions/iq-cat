@@ -3,19 +3,19 @@
 local fle=$1 IFS=$'\n' q
 # Exists?
 if [[ ! -e $fle ]]; then
-    msg {203}Error:%f no such file {41}$fle%f, cannot display
+    iqmsg {203}Error:%f no such file {41}$fle%f, cannot display
     return 1
 fi
 
 # Is readable?
 if [[ ! -r $fle ]]; then
-    msg {203}Error:%f file {41}$fle%f unreadable, cannot display
+    iqmsg {203}Error:%f file {41}$fle%f unreadable, cannot display
     return 1
 fi
 
 # Is directory?
 if [[ -d $fle ]]; then
-    msg {41}Directory {208}$fle {41}contents:
+    iqmsg {41}Directory {208}$fle {41}contents:
     print -rl -- $fle/*(N)
 else
     while read q; do

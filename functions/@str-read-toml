@@ -53,7 +53,7 @@
         fi
     }
 
-    [[ ! -r "$__toml_file" ]] && { builtin msg: {203}@str-read-toml: \
+    [[ ! -r "$__toml_file" ]] && { builtin iqmsg: {203}@str-read-toml: \
         {174}toml file is unreadable \($__toml_file\); return 1; }
     (( ${(P)+__out_hash} )) || typeset -gA "$__out_hash"
 
@@ -73,7 +73,7 @@
             reply+=( $__cur_section-$__line )
         else
             if [[ -n $__line ]]; then
-                msg {203}Error:{174} Incorrect line in input: %f$__line
+                iqmsg {203}Error:{174} Incorrect line in input: %f$__line
                 retval+=1
             fi
         fi

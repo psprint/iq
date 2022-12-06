@@ -41,7 +41,7 @@
     trap "unset -f -- \"\${(k)functions[@]:|tomatentry}\" &>/dev/null; unset tomatentry" EXIT
     trap "unset -f -- \"\${(k)functions[@]:|tomatentry}\" &>/dev/null; unset tomatentry; return 1" INT
 
-    [[ -e "$__file" ]]&&((!1))&&msg {208}Warning: {203}@str-write-toml: \
+    [[ -e "$__file" ]]&&((!1))&&iqmsg {208}Warning: {203}@str-write-toml: \
         {174}toml file {41}%B$__file{203}%b already exists
 
     __file=$__file.out
