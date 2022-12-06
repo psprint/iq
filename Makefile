@@ -3,14 +3,14 @@ NAME=iq
 INSTALL?=install -c
 PREFIX?=$(HOME)/.local
 BIN_DIR?=$(DESTDIR)$(PREFIX)/bin
-SHARE_DIR?=$(DESTDIR)$(PREFIX)/share/$(NAME)
+LIBEXEC_DIR?=$(DESTDIR)$(PREFIX)/libexec/$(NAME)
 DOC_DIR?=$(DESTDIR)$(PREFIX)/share/doc/$(NAME)
 XDG_CONFIG_HOME?=$(HOME)/.config
 
 all:
 
 install:
-	$(INSTALL) -d $(SHARE_DIR)
+	$(INSTALL) -d $(LIBEXEC_DIR)
 	$(INSTALL) -d $(XDG_CONFIG_HOME)/.config
 	$(INSTALL) -d $(XDG_CONFIG_HOME)/.config/$(NAME)
 	$(INSTALL) -d $(DOC_DIR)
@@ -20,12 +20,12 @@ install:
 		git rev-parse HEAD; \
 	else \
 		cat .revision-hash; \
-	fi > $(SHARE_DIR)/.revision-hash
-	for fname in functions/*[^~]; do cp -vf "$$fname" $(SHARE_DIR); done
+	fi > $(LIBEXEC_DIR)/.revision-hash
+	for fname in functions/*[^~]; do cp -vf "$$fname" $(LIBEXEC_DIR); done
 
 uninstall:
-	rm -f $(SHARE_DIR)/.revision-hash $(SHARE_DIR)/_* $(SHARE_DIR)/* 
-	[ -d $(SHARE_DIR) ] && rmdir $(SHARE_DIR) || true
+	rm -f $(LIBEXEC_DIR)/.revision-hash $(LIBEXEC_DIR)/_* $(LIBEXEC_DIR)/* 
+	[ -d $(LIBEXEC_DIR) ] && rmdir $(LIBEXEC_DIR) || true
 	rm -f $(DOC_DIR)/README.md $(DOC_DIR)/LICENSE $(DOC_DIR)/NEWS
 	[ -d $(DOC_DIR) ] && rmdir $(DOC_DIR) || true
 

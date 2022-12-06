@@ -8,6 +8,10 @@ builtin emulate -L zsh
 0=${${0:#$ZSH_ARGZERO}:-${(%):-%N}}
 0=${${(M)0##/*}:-$PWD/${0#./}}
 
+#
+# Process options
+#
+
 local -A Options
 local -a opt_help opt_e opt_c opt_v opt_s args
 integer verbose exit_code
@@ -23,15 +27,6 @@ iniq-parse-opts() {
     reply=("$@")
 }
 
-[[ -f $0:h:h/Makefile ]] && \
-    source $0:h:h/functions/common-init "${opt_e:+edit}${opt_c:+cat}" $0:h:h
-[[ -f $0:h:h/share/iq/common-init ]] && \
-    source $0:h:h/share/iq/common-init "${opt_e:+edit}${opt_c:+cat}" $0:h:h
-
-iniq-usage() {
-    noglob msg {41}iq {39}-[ecbvh] {208}\<INI-file-path\> …
-}
-
 # Init code, options and usage.
 iniq-parse-opts "$@"||return $?
 (($#opt_help)) && {iniq-usage; return 0;}
@@ -43,6 +38,20 @@ args=( "$reply[@]" )
 (($+Options[--set]))&&Options[-s]=
 (($+Options[--verbose]))&& Options[-v]=
 
+#
+# source a base script
+#
+
+[[ -f $0:h:h/Makefile ]] && \
+    source $0:h:h/functions/common-script "${opt_e:+edit}${opt_c:+cat}" $0:h:h
+[[ -f $0:h:h/libexec/iq/common-script ]] && \
+    source $0:h:h/libexec/iq/common-script "${opt_e:+edit}${opt_c:+cat}" $0:h:h
+
+
+#
+# execute requested operation
+#
+
 # Set
 if (( $+Options[-s] )); then
     for q in "${(@)args[2,-1]}"; do
@@ -51,6 +60,7 @@ if (( $+Options[-s] )); then
         repeat 1 {iniq-set Options $@; exit_code+=$?;}
     done
 fi
+
 # Edit
 if (( $+Options[-e] )); then
     for q in "${(@)args[2,-1]}"; do
@@ -59,10 +69,12 @@ if (( $+Options[-e] )); then
         repeat 1 {iniq-edit Options $@; exit_code+=$?;}
     done
 fi
+
 # Cat
 if (( $+Options[-c] )); then
-    repeat 1 {iniq-cat Options $@; exit_code+=$?;}
+    repeat 1 {iniq-cat Options $1; exit_code+=$?;}
 fi
+
 # Warning message
 if ((exit_code)); then
     msg {208}Warning: %fnon-zero exit code %B{41}$exit_code

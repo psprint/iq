@@ -1,0 +1,49 @@
+#!/usr/bin/env zsh
+# -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+
+# Copyright (c) 2022 Sebastian Gniazdowski
+
+# Set the base and typically useful options
+builtin emulate -L zsh
+builtin setopt extendedglob warncreateglobal typesetsilent noshortloops \
+        noautopushd multios
+
+0=$2/functions/common-script
+
+typeset -gA Plugins
+Plugins[IQ_DIR]=$2
+Plugins[IQ_SUB_CMD]=$1
+Plugins[IQ_LIBEXEC_DIR]=$2/libexec/iq
+Plugins[IQ_FILE_CHARS]='[[:alnum:]+_%@…\[\]\{\}\(\):.,\?\~\!\/–—-]'
+: ${IQ_NULL:=/dev/null}
+
+# Export crucial vars
+export IQ_DIR=$Plugins[IQ_DIR] IQ_NULL
+
+{ zmodload zsh/system && zsystem supports flock
+  Plugins[IQ_FLOCK_AVAIL]=$((!$?))
+  zmodload zsh/datetime
+  Plugins[IQ_DATETIME_AVAIL]=$((!$?))
+  zmodload zsh/stat
+  Plugins[IQ_ZSTAT_AVAIL]=$((!$?))
+} &>/dev/null
+
+# Reach for scripts and functions, either from a prefix or via source path.
+local -Ua fpath
+local -U FPATH
+# In repo path? (running directly from cloned repository)
+[[ -d $Plugins[IQ_DIR]/functions ]] && \
+    fpath+=( $Plugins[IQ_DIR]/functions )
+# In prefix?
+[[ -d $Plugins[IQ_LIBEXEC_DIR] ]] && \
+    fpath+=( $Plugins[IQ_LIBEXEC_DIR] )
+# Load all functions.
+autoload -Uz $Plugins[IQ_DIR]/functions/*~*\~(N:t) \
+    $Plugins[IQ_LIBEXEC_DIR]/*~*\~(N:t)
+
+# Cleanup on exit.
+local -a mbegin mend match reply
+integer MBEGIN MEND
+local MATCH REPLY
+
+# vim:ft=zsh:tw=80:sw=4:sts=4:et:foldmarker=[[[,]]]

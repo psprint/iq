@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+
+# Use standard input if $1 is only extension.
+local fle=$1 use=$2
+local -a args
+
+local viewer=$use
+[[ -z $viewer ]]&&viewer=${IQ_VIEWER:-$VIEWER}
+(($+commands[$viewer]))||viewer=bat
+(($+commands[$viewer]))||viewer=source-highlight
+(($+commands[$viewer]))||viewer=mcview
+(($+commands[$viewer]))||viewer=less
+(($+commands[$viewer]))||viewer=iq-cat
+
+[[ $viewer == source-highlight ]] && args=(
+                            -f esc -o STDOUT -s $fle:e 
+                                ${${fle:r}:+-i} ); 
+[[ $viewer == bat ]] && args=(-l $fle:e )
+
+repeat 1 { $viewer $args ${${fle:r}:+$fle}; }
+
+# vim:ft=zsh:tw=80:sw=4:sts=4:et:foldmarker=[[[,]]]
