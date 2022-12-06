@@ -28,7 +28,7 @@ iniq-parse-opts() {
             -get g \
             -edit e \
             -cat c \
-            -set s \
+            -put -p \
             -bottom b \
             -quiet q \
             -verbose v \
@@ -46,47 +46,49 @@ args=("$reply[@]")
 (($+Options[--edit]))&&Options[-e]=
 (($+Options[--cat]))&&Options[-c]=
 (($+Options[--help]))&&Options[-h]=
-(($+Options[--set]))&&Options[-s]=
+(($+Options[--insert]))&&Options[-i]=
 (($+Options[--quiet]))&&Options[-q]=
 (($+Options[--verbose]))&&Options[-v]=
-
+(($+Options[--bottom]))&&Options[-b]=
+# Print usage if requested.
 (($+Opions[-h]))&&{iniq-usage; return 0;}
 
 #
 # execute requested operation
 #
-
-# Set
-if (( $+Options[-s] )); then
-    for q in "$args[@]"; do
-        # Convert key and value
-        set -- $args[1] ${q%%=*} ${q##*=}
-        repeat 1 {iniq-set Options $@; exit_code+=$?;}
-    done
-fi
-
 # Edit
-if (( $+Options[-e] )); then
-    for q in "$args[@]"; do
-        # Convert key and value
-        set -- $args[1] ${q%%=*} ${q##*=}
-        repeat 1 {iniq-edit Options $@; exit_code+=$?;}
+if (($+Options[-e]+$+Options[-i])); then
+    for q in "${(@)args[2,-1]}"; do
+        ((k))&&{k=0;continue}
+        if [[ $q != *=* ]]; then
+            k=i+1
+            set -- "$args[1]" "$q" "$args[k]"
+        else
+            set -- "$args[1]" "${q%%=*}" "${q##*=}"
+        fi
+        set -- "$args[1]" "${q%%=*}" "${q##*=}"
+        (($+Options[-e]))&&repeat 1 {iniq-edit Options $@; exit_code+=$?;}
+        (($+Options[-i]))&&repeat 1 {iniq-insert Options $@; exit_code+=$?;}
     done
 fi
 
 # Get
 if (( $+Options[-g] )); then
-    for q in "$args[@]"; do
-        # Convert key and value
-        set -- $args[1] ${q%%=*} ${q##*=}
-        repeat 1 {iniq-get Options $@; exit_code+=$?;}
-    done
+    if (($#args>1)); then
+        for q in "${(@)args[2,-1]}"; do
+            # Convert key and value
+            set -- "$args[1]" "$q"
+            repeat 1 {iniq-get Options $@; exit_code+=$?;}
+        done
+    else
+        iqmsg -ep {203}Error: {208}Missing \
+            %B{41}section%b{208}/%B{39}key{208} %bspec, exiting…
+    fi
 fi
-
 # Cat
-if (( $+Options[-c] )); then
+if (($+Options[-c])); then
     for q in "$args[@]"; do
-        repeat 1 {iniq-cat Options $q; exit_code+=$?;}
+        repeat 1 {iniq-cat Options "$q"; exit_code+=$?;}
     done
 fi
 

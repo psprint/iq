@@ -7,8 +7,6 @@ LIBEXEC_DIR?=$(DESTDIR)$(PREFIX)/libexec/$(NAME)
 DOC_DIR?=$(DESTDIR)$(PREFIX)/share/doc/$(NAME)
 XDG_CONFIG_HOME?=$(HOME)/.config
 
-all:
-
 install:
 	$(INSTALL) -d $(LIBEXEC_DIR)
 	$(INSTALL) -d $(XDG_CONFIG_HOME)/.config
@@ -29,4 +27,8 @@ uninstall:
 	rm -f $(DOC_DIR)/README.md $(DOC_DIR)/LICENSE $(DOC_DIR)/NEWS
 	[ -d $(DOC_DIR) ] && rmdir $(DOC_DIR) || true
 
-.PHONY: all install uninstall
+tags:
+	ctags -R -e -G --maxdepth=3 --options=misc/zsh.ctags --languages=zsh,make .
+
+.PHONY: all install uninstall tags
+

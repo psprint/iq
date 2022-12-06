@@ -1,9 +1,14 @@
 #!/usr/bin/env zsh
 emulate -L zsh -o extendedglob
 
-local p=$1
-[[ $1 == -p ]]&&shift
+local -A Opts
+builtin zparseopts -D -E -A Opts -- \
+        p e q || return 7
+
 # Allow but strip non-number format codes, for future expansions
-if ((!$+Options[-q])) || [[ -n $p ]]; then
-    print -P "${${@//\{[^0-9][^\}]##\}/}//(#b)(\{[^\}]##\})/%F$match[1]}%f%b"
+(($+Opts[-e]))&&local e=-u2
+if ((!$+Options[-q]&&!$+Opts[q]||$+Opts[-p])); then
+    print $p $e -P "${${@//\{[^0-9][^\}]##\}/}//(#b)(\{[^\}]##\})/%F$match[1]}%f%b"
 fi
+
+# vim:ft=zsh:sw=4:sts=4:et
