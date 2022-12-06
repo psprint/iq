@@ -21,14 +21,15 @@ builtin emulate -L zsh
 # Process options
 #
 
+integer cnt
 local -A Options
 iniq-parse-opts() {
     reply=()
     builtin zparseopts -D -E -A Options -- \
-            -get g \
-            -edit e \
-            -cat c \
-            -put -p \
+            -get G \
+            -edit E \
+            -cat C \
+            -insert I \
             -bottom b \
             -quiet q \
             -verbose v \
@@ -42,9 +43,9 @@ iniq-usage() {
 iniq-parse-opts "$@"||{iniq-usage; return 7;}
 args=("$reply[@]")
 # Reduce some options to one flag field.
-(($+Options[--get]))&&Options[-g]=
-(($+Options[--edit]))&&Options[-e]=
-(($+Options[--cat]))&&Options[-c]=
+(($+Options[--get]))&&Options[-G]=
+(($+Options[--edit]))&&Options[-E]=
+(($+Options[--cat]))&&Options[-C]=
 (($+Options[--help]))&&Options[-h]=
 (($+Options[--insert]))&&Options[-i]=
 (($+Options[--quiet]))&&Options[-q]=
@@ -57,7 +58,7 @@ args=("$reply[@]")
 # execute requested operation
 #
 # Edit
-if (($+Options[-e]+$+Options[-i])); then
+if (($+Options[-E]||$+Options[-I])); then
     for q in "${(@)args[2,-1]}"; do
         ((k))&&{k=0;continue}
         if [[ $q != *=* ]]; then
@@ -67,13 +68,14 @@ if (($+Options[-e]+$+Options[-i])); then
             set -- "$args[1]" "${q%%=*}" "${q##*=}"
         fi
         set -- "$args[1]" "${q%%=*}" "${q##*=}"
-        (($+Options[-e]))&&repeat 1 {iniq-edit Options $@; exit_code+=$?;}
-        (($+Options[-i]))&&repeat 1 {iniq-insert Options $@; exit_code+=$?;}
+        (($+Options[-E]))&&repeat 1 {iniq-edit Options $@; exit_code+=$?;}
+        (($+Options[-I]))&&repeat 1 {iniq-insert Options $@; exit_code+=$?;}
     done
 fi
 
 # Get
-if (( $+Options[-g] )); then
+if (( $+Options[-G] )); then
+    cnt+=1
     if (($#args>1)); then
         for q in "${(@)args[2,-1]}"; do
             # Convert key and value
@@ -86,7 +88,8 @@ if (( $+Options[-g] )); then
     fi
 fi
 # Cat
-if (($+Options[-c])); then
+if (($+Options[-C])); then
+    cnt+=1
     for q in "$args[@]"; do
         repeat 1 {iniq-cat Options "$q"; exit_code+=$?;}
     done
@@ -94,7 +97,9 @@ fi
 
 # Warning message
 ((exit_code))&&iqmsg {208}Warning: %fnon-zero exit code %B{41}$exit_code
-
+((cnt))||iqmsg {208}Error: %fno main option specified, use one of: \
+            {39}%B-C%f%b/{39}%B-I%f%b/{39}%B-E%f%b/{39}%B-G%b%f for \
+            cat/insert/edit/get operation.
 
 # Between 1…9 means that index has been updated, despite problems.
 return exit_code

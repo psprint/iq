@@ -30,7 +30,7 @@
 
 @str-write-toml() {
     local __file="$1" __hash=${2:-INI} __order=${3:-order}
-    local __item __cur_section="void" __access_string REPLY
+    local __item __cur_section="void" __access_string REPLY __first=1
     local -a match mbegin mend __inorder
     integer retval
 
@@ -59,7 +59,9 @@
         fi
         if [[ $q != ${__item%%__*} ]]; then
             q=${__item%%__*}
-            print "[$q]" >> $__file
+            ((!__first))&&printf '\n'>> $__file
+            printf '%s\n' "[$q]" >> $__file
+            __first=0
         fi
         __access_string="${__hash}[${__item}]"
         print ${__item##*__}=${(P)__access_string} >> $__file
