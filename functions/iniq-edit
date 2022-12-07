@@ -19,7 +19,7 @@ fi
 exval=$?
 local -a order=( "$reply[@]" )
 
-(( exval )) && iqmsg {208}Warning:{204}Found {41}$exval{204} errors \
+((exval)) && iqmsg {208}Warning:{204}Found {41}$exval{204} errors \
     while processing {39}$iq_file:t
 if [[ -z $INI || -z $reply ]]; then
     iqmsg {208}Error: could\'t process INI file {41}$iq_file{208}, no data found.

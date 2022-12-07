@@ -21,7 +21,7 @@ builtin emulate -L zsh
 # Process options
 #
 
-integer cnt
+integer cnt o
 local -A Options
 iniq-parse-opts() {
     reply=()
@@ -55,20 +55,32 @@ args=("$reply[@]")
 (($+Options[-h]))&&{iniq-usage; return 0;}
 
 #
+# Find ini file (an option name)
+#
+
+
+local -T IQ_CMDS_PATH=$IQ_CMDS_PATH cmds
+local -Ua cmds found
+
+if [[ $args[1] != (./|/)* && ! -f $args[1] ]]; then
+    found=($^cmds/$args[1](.ini|(#e))(#qNon.))
+    (($#found))&&args[1]=$found[1]
+fi
+
+#
 # execute requested operation
 #
 # Edit
 if (($+Options[-E]||$+Options[-I])); then
     cnt+=1
-    for q in "${(@)args[2,-1]}"; do
-        ((k))&&{k=0;continue}
+    for ((o=2;o<=$#;o++)) do
+        q=$args[o]
         if [[ $q != *=* ]]; then
-            k=i+1
-            set -- "$args[1]" "$q" "$args[k]"
+            set -- "$args[1]" "$q" "$args[o+1]"
+            o+=1
         else
             set -- "$args[1]" "${q%%=*}" "${q##*=}"
         fi
-        set -- "$args[1]" "${q%%=*}" "${q##*=}"
         (($+Options[-E]))&&repeat 1 {iniq-edit Options $@; exit_code+=$?;}
         (($+Options[-I]))&&repeat 1 {iniq-add Options $@; exit_code+=$?;}
     done
