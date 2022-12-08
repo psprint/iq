@@ -7,7 +7,7 @@ builtin zparseopts -D -E -A Opts -- \
 
 # Allow but strip non-number format codes, for future expansions
 (($+Opts[-e]))&&local e=-u2
-if ((!$+Options[-q]&&!$+Opts[q]||$+Opts[-p])); then
+if ((!$+Options[-q]&&!$+Opts[-q]||$+Opts[-p])); then
     print $p $e -P "${${@//\{[^0-9][^\}]##\}/}//(#b)(\{[^\}]##\})/%F$match[1]}%f%b"
 fi
 

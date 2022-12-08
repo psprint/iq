@@ -21,7 +21,6 @@ builtin emulate -L zsh
 # Process options
 #
 
-integer cnt o
 local -A Options
 iniq-parse-opts() {
     reply=()
@@ -41,7 +40,7 @@ iniq-usage() {
 }
 # Init code, options and usage.
 iniq-parse-opts "$@"||{iniq-usage; return 7;}
-args=("$reply[@]")
+#args=("$reply[@]")
 # Reduce some options to one flag field.
 (($+Options[--get]))&&Options[-G]=
 (($+Options[--edit]))&&Options[-E]=
@@ -57,15 +56,16 @@ args=("$reply[@]")
 #
 # Find ini file (an option name)
 #
-
-
-local -T IQ_CMDS_PATH=$IQ_CMDS_PATH cmds
+#@str-dump Options
 local -Ua cmds found
+local -TU IQ_CMDS_PATH=$IQ_PATH cmds
+args=("$reply[@]")
+integer cnt o
+local q
+cmds+=(~/.config/iq)
 
-if [[ $args[1] != (./|/)* && ! -f $args[1] ]]; then
-    found=($^cmds/$args[1](.ini|(#e))(#qNon.))
-    (($#found))&&args[1]=$found[1]
-fi
+found=($^cmds/$reply[1](.ini|(#e))(#qNon.))
+if (($#found)) {args[1]=(${${(on)found[1]}});}
 
 #
 # execute requested operation
@@ -73,7 +73,7 @@ fi
 # Edit
 if (($+Options[-E]||$+Options[-I])); then
     cnt+=1
-    for ((o=2;o<=$#;o++)) do
+    for ((o=2;o<=$#args;o++)) do
         q=$args[o]
         if [[ $q != *=* ]]; then
             set -- "$args[1]" "$q" "$args[o+1]"
